@@ -9,6 +9,10 @@
 
 
 
+
+
+
+
 '''
 # Script:
 import ctypes
@@ -31,29 +35,36 @@ for i in Probes:
 shearI = maxProbe.PropertyByName("ShearForceAtI")
 shearJ = maxProbe.PropertyByName("ShearForceAtJ")
 shear = shearI if shearI.InternalValue > shearJ.InternalValue else shearJ
+
 print('Most loaded beam')
 print('Axial Force = '+ maxProbe.PropertyByName("AxialForce").StringValue)
 print('Shear Force = '+ shear.StringValue)
 text = 'Axial Force = '+ maxProbe.PropertyByName("AxialForce").StringValue + "\n" + \
         'Shear Force = '+ shear.StringValue
-Model.Activate()
-try:
+
+remPoints = Model.GetChildren[Ansys.ACT.Automation.Mechanical.RemotePoint](True)
+
+def isRemPromoted(points, beam):
+    for i in points:
+        if i.Name== beam.PropertyByName("ReferenceRemotePointSelection").StringValue:
+            return True
+
+if isRemPromoted(remPoints, maxProbe.BoundaryConditionSelection):
     beam = maxProbe.BoundaryConditionSelection
+    beam.Activate()
     remPt = beam.PromoteToRemotePoint()[0]
     nodeNum = remPt.GetMeshRegion().NodeIds[0]
     print('APDL node num = ' + nodeNum.ToString())
     text += "\n" + 'APDL node num = ' + nodeNum.ToString()
-except:
+else:
     text += "\n\nAPDL node num is not available\n" + \
         "To get it promote related beam\n" + \
         "probes to remote points manualy.\n"+\
         "Attention! That will clear result data."
+
+
 ctypes.windll.user32.MessageBoxW(0, text, "Most loaded beam", 0)
 maxProbe.BoundaryConditionSelection.Activate()
-
-
-
-
 
 
 
